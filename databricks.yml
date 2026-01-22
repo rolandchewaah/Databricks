@@ -1,0 +1,16 @@
+bundle:
+  name: cdc-medallion-pipeline
+
+include:
+  - resources/*.yml
+  - src/**
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: ${env.DATABRICKS_HOST}
+
+  prod:
+    workspace:
+      host: ${env.DATABRICKS_HOST}
