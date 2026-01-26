@@ -1,9 +1,16 @@
 from pyspark.sql.functions import to_timestamp, sha2, concat_ws, col
 
-bronze_table = "bronze.events_raw"
-silver_table = "silver.events"
+# Use the standard Unity Catalog namespace for CE
+bronze_table = "default.events_raw"
+silver_table = "default.events_silver"
 
-raw = spark.table(bronze_table)
+# Ensure the source table actually exists
+try:
+    raw = spark.table(bronze_table)
+except Exception as e:
+    print(f"Error: {bronze_table} not found. Ensure you created it in the Catalog.")
+    # Fallback: if you haven't created the table yet, read from your Volume path
+    # raw = spark.read.load("/Volumes/main/default/raw_data/events")
 
 clean = (raw
   .withColumn("event_time", to_timestamp(col("event_ts")))
@@ -11,12 +18,7 @@ clean = (raw
   .filter(col("event_id").isNotNull())
 )
 
-# Deduplicate by event_id (or a deterministic hash key if needed)
 deduped = clean.dropDuplicates(["event_id"])
 
-(deduped
- .write
- .format("delta")
- .mode("overwrite")
- .option("overwriteSchema", "true")
- .saveAsTable(silver_table))
+# Save the silver table
+deduped.write.mode("overwrite").saveAsTable(silver_table)
