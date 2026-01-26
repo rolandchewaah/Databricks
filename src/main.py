@@ -4,8 +4,15 @@ from bronze.ingest import run as bronze_run
 from silver.cdc_merge import run as silver_run
 from quality.checks import run as quality_run
 from gold.publish import run as gold_run
+from pyspark.sql import SparkSession  # Assuming PySpark is used
 
 tables = Tables()
+
+# Initialize Spark session
+spark = SparkSession.builder.appName("DataPipeline").getOrCreate()
+
+if len(sys.argv) < 2:
+    raise ValueError("Task argument is required. Usage: python main.py [bronze|silver|quality|gold]")
 
 task = sys.argv[1]
 
